@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- PWA & Mobile Optimization Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0f172a">
+    <title>AI Cinematic Director</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel (Compiles React in the browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { background-color: #0f172a; color: #f1f5f9; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- SVG ICONS ---
+        const IconSave = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>;
+        const IconCamera = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>;
+        const IconUsers = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
+        const IconMap = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>;
+        const IconClapperboard = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.4-2.2 1.5-2.5l13.5-4c1.1-.3 2.2.4 2.5 1.5l.6 2.4z"/><path d="m2.6 10.4 16.9-5"/><path d="m11.1 2.8 2.1 6.1"/><path d="m5.1 4.6 2.1 6.1"/><path d="m17.1 1 2.1 6.1"/><path d="M4 11v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8z"/></svg>;
+        const IconCheck = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
+        const IconCopy = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>;
+        const IconAlert = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
+        const IconMessage = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+        const IconPlus = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+        const IconTrash = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>;
+
+        // --- MAPS ---
+        const EMOTION_MAP = {
+            "None": { img: "", vid: "" },
+            "Calm": { 
+                img: "relaxed expression, calm posture", 
+                vid: "speaking gently, relaxed shoulders, subtle head nods, steady breathing" 
+            },
+            "Terrified": { 
+                img: "wide eyes, tense posture, terrified expression, mouth slightly parted", 
+                vid: "speaking frantically, shaking, tense movements, terrified body language" 
+            },
+            "Aggressive": { 
+                img: "angry expression, tense muscles, glaring eyes, mouth open in mid-shout", 
+                vid: "shouting aggressively, sudden hostile movements, tense neck muscles" 
+            },
+            "Joyful": { 
+                img: "bright smiling eyes, relaxed posture, joyful expression, mouth open smiling", 
+                vid: "laughing mid-sentence, animated and happy gestures, relaxed body language" 
+            },
+            "Sad": { 
+                img: "looking down, teary eyes, somber expression, subtle frown", 
+                vid: "speaking softly, slow movements, looking away, wiping tears" 
+            },
+            "Mysterious": { 
+                img: "face partially in shadow, unreadable intense expression, piercing gaze", 
+                vid: "speaking in hushed tones, slow deliberate movements, intense staring" 
+            }
+        };
+
+        const ANGLE_MAP = {
+            "None": "",
+            "Aerial / Drone": "extreme wide establishing shot, aerial drone perspective, shot from high above",
+            "Bird's-Eye View": "top-down view, 90-degree overhead angle, looking straight down",
+            "High Angle": "high angle shot, looking down at the subject, subject appears vulnerable",
+            "Low Angle": "low angle shot, looking up at the subject, heroic perspective, towering",
+            "Worm's-Eye View": "ground-level shot, extreme low angle, floor perspective",
+            "Over-the-Shoulder": "over-the-shoulder shot, looking past foreground character, depth of field",
+            "Tracking Behind": "shot from behind, following the subject, subject facing away from camera",
+            "Profile / Side View": "90-degree side profile, perfect silhouette, sharp facial profile",
+            "Extreme Close-Up": "extreme close-up macro shot, 85mm lens, extremely shallow depth of field, detailed skin texture",
+            "Medium Shot": "medium waist-up shot, 50mm lens, standard narrative framing",
+            "Wide Shot": "wide shot, 24mm lens, showing full subject and environment"
+        };
+
+        const LIGHTING_MAP = [
+            "None",
+            "Cinematic Nighttime, moody teal and orange",
+            "Golden Hour, warm sunlight, long shadows",
+            "Harsh Midday Sun, high contrast",
+            "Volumetric Fog, mysterious lighting",
+            "Neon Cyberpunk, vibrant pinks and blues",
+            "Firelight, flickering warm glow, deep shadows"
+        ];
+
+        const MOVEMENT_MAP = [
+            "Static shot",
+            "Slow pan left",
+            "Slow pan right",
+            "Fast push-in (Zoom)",
+            "Slow pull-back",
+            "Handheld camera shake",
+            "Drone tracking backward",
+            "Circling the subject"
+        ];
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('builder');
+            const [copySuccess, setCopySuccess] = useState('');
+
+            // App State
+            const [characters, setCharacters] = useState([]);
+            const [locations, setLocations] = useState([]);
+            const [scene, setScene] = useState({
+                locationId: '',
+                char1Id: '',
+                char2Id: '',
+                action: '',
+                dialogue: '',
+                emotion: 'None',
+                angle: 'None',
+                movement: 'Static shot',
+                lighting: 'None'
+            });
+
+            // Vault Input State
+            const [newChar, setNewChar] = useState({ name: '', description: '' });
+            const [newLoc, setNewLoc] = useState({ name: '', description: '' });
+
+            // Initialize from LocalStorage
+            useEffect(() => {
+                const savedChars = localStorage.getItem('mpb_characters');
+                const savedLocs = localStorage.getItem('mpb_locations');
+                const savedScene = localStorage.getItem('mpb_scene');
+                
+                if (savedChars) setCharacters(JSON.parse(savedChars));
+                if (savedLocs) setLocations(JSON.parse(savedLocs));
+                if (savedScene) setScene(JSON.parse(savedScene));
+            }, []);
+
+            // Save to LocalStorage
+            useEffect(() => {
+                localStorage.setItem('mpb_characters', JSON.stringify(characters));
+                localStorage.setItem('mpb_locations', JSON.stringify(locations));
+                localStorage.setItem('mpb_scene', JSON.stringify(scene));
+            }, [characters, locations, scene]);
+
+            // Handlers
+            const addCharacter = () => {
+                if (!newChar.name || !newChar.description) return;
+                setCharacters([...characters, { id: Date.now().toString(), ...newChar }]);
+                setNewChar({ name: '', description: '' });
+            };
+
+            const deleteCharacter = (id) => {
+                setCharacters(characters.filter(c => c.id !== id));
+                if (scene.char1Id === id) setScene({ ...scene, char1Id: '' });
+                if (scene.char2Id === id) setScene({ ...scene, char2Id: '' });
+            };
+
+            const addLocation = () => {
+                if (!newLoc.name || !newLoc.description) return;
+                setLocations([...locations, { id: Date.now().toString(), ...newLoc }]);
+                setNewLoc({ name: '', description: '' });
+            };
+
+            const deleteLocation = (id) => {
+                setLocations(locations.filter(l => l.id !== id));
+                if (scene.locationId === id) setScene({ ...scene, locationId: '' });
+            };
+
+            const copyToClipboard = (text, type) => {
+                // Try standard clipboard API first, fallback to execCommand
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text);
+                } else {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try { document.execCommand('copy'); } catch (err) {}
+                    document.body.removeChild(textArea);
+                }
+                setCopySuccess(type);
+                setTimeout(() => setCopySuccess(''), 2000);
+            };
+
+            // Prompt Generation
+            const generateImagePrompt = () => {
+                const loc = locations.find(l => l.id === scene.locationId);
+                const c1 = characters.find(c => c.id === scene.char1Id);
+                const c2 = characters.find(c => c.id === scene.char2Id);
+                const angleText = ANGLE_MAP[scene.angle];
+                const emotionText = EMOTION_MAP[scene.emotion]?.img;
+                const lightText = scene.lighting !== 'None' ? scene.lighting : '';
+
+                let prompt = "";
+
+                if (loc) prompt += `Setting: ${loc.description}. `;
+                if (angleText) prompt += `${angleText}. `;
+                if (lightText) prompt += `${lightText}. `;
+
+                if (c1 && c2) {
+                    prompt += `On the left side of the frame is ${c1.description}. On the right side of the frame is ${c2.description}. `;
+                    if (scene.action) prompt += `They are ${scene.action}. `;
+                } else if (c1) {
+                    prompt += `Subject is ${c1.description}. `;
+                    if (scene.action) prompt += `Action: ${scene.action}. `;
+                } else {
+                    if (scene.action) prompt += `Action: ${scene.action}. `;
+                }
+
+                if (emotionText && (c1 || c2)) prompt += `Subject exhibits ${emotionText}.`;
+
+                return prompt.trim();
+            };
+
+            const generateVideoPrompt = () => {
+                const emotionText = EMOTION_MAP[scene.emotion]?.vid;
+                let prompt = `${scene.movement}.`;
+                
+                if (scene.action) prompt += ` ${scene.action}.`;
+                if (emotionText) prompt += ` Subject is ${emotionText}.`;
+
+                if (scene.dialogue && scene.dialogue.trim() !== '') {
+                    if (scene.dialogue.toLowerCase() !== 'none') {
+                        prompt += ` Subject is visibly speaking the words: "${scene.dialogue}".`;
+                    }
+                }
+                
+                return prompt.trim();
+            };
+
+            const finalImagePrompt = generateImagePrompt();
+            const finalVideoPrompt = generateVideoPrompt();
+
+            return (
+                <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
+                    <div className="max-w-6xl mx-auto">
+                        
+                        {/* Header */}
+                        <header className="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-4">
+                            <div>
+                                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-400 bg-clip-text text-transparent flex items-center gap-2">
+                                    <IconClapperboard className="text-amber-500" />
+                                    AI Cinematic Director
+                                </h1>
+                                <p className="text-slate-400 text-sm mt-1">Master Prompt Builder</p>
+                            </div>
+                            <div className="flex gap-2 mt-4 md:mt-0">
+                                <span className="flex items-center gap-1 text-xs text-green-400 bg-green-400/10 px-3 py-1.5 rounded-full border border-green-400/20">
+                                    <IconSave /> Auto-Saving
+                                </span>
+                            </div>
+                        </header>
+
+                        {/* Tabs */}
+                        <div className="flex gap-2 md:gap-4 mb-6">
+                            <button 
+                                onClick={() => setActiveTab('builder')}
+                                className={`flex-1 md:flex-none px-4 md:px-6 py-3 rounded-lg font-medium transition-all flex justify-center items-center gap-2 ${activeTab === 'builder' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                            >
+                                <IconCamera /> Scene Builder
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('vault')}
+                                className={`flex-1 md:flex-none px-4 md:px-6 py-3 rounded-lg font-medium transition-all flex justify-center items-center gap-2 ${activeTab === 'vault' ? 'bg-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                            >
+                                <IconUsers /> The Vault
+                            </button>
+                        </div>
+
+                        {/* --- SCENE BUILDER TAB --- */}
+                        {activeTab === 'builder' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                
+                                {/* Input Panel */}
+                                <div className="lg:col-span-7 bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl">
+                                    <h2 className="text-lg md:text-xl font-semibold mb-6 flex items-center gap-2">
+                                        <IconCamera className="text-amber-500" /> Shot Configuration
+                                    </h2>
+
+                                    <div className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-400 mb-1">Location / Setting</label>
+                                            <select 
+                                                value={scene.locationId} 
+                                                onChange={e => setScene({...scene, locationId: e.target.value})}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
+                                            >
+                                                <option value="">Select a Master Location...</option>
+                                                {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-400 mb-1">Character 1 (Main)</label>
+                                                <select 
+                                                    value={scene.char1Id} 
+                                                    onChange={e => setScene({...scene, char1Id: e.target.value})}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
+                                                >
+                                                    <option value="">Select Character...</option>
+                                                    {characters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-400 mb-1">Character 2 (Optional)</label>
+                                                <select 
+                                                    value={scene.char2Id} 
+                                                    onChange={e => setScene({...scene, char2Id: e.target.value})}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
+                                                >
+                                                    <option value="">None</option>
+                                                    {characters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-400 mb-1">General Action (Physical Setup)</label>
+                                            <input 
+                                                type="text" 
+                                                value={scene.action}
+                                                onChange={e => setScene({...scene, action: e.target.value})}
+                                                placeholder="e.g. Kneeling in the red dust, looking up slowly..."
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 placeholder-slate-600"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-blue-400 mb-1 flex items-center gap-1">
+                                                <IconMessage /> Dialogue Context (Forces Lip-Sync)
+                                            </label>
+                                            <input 
+                                                type="text" 
+                                                value={scene.dialogue}
+                                                onChange={e => setScene({...scene, dialogue: e.target.value})}
+                                                placeholder="e.g. The exact words spoken. Or write 'None'"
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-600"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-700/50">
+                                            <div>
+                                                <label className="block text-sm font-medium text-amber-400 mb-1">Emotion / Gesture Tag</label>
+                                                <select 
+                                                    value={scene.emotion} 
+                                                    onChange={e => setScene({...scene, emotion: e.target.value})}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-amber-100 focus:outline-none focus:border-amber-500 appearance-none"
+                                                >
+                                                    {Object.keys(EMOTION_MAP).map(e => <option key={e} value={e}>{e}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-400 mb-1">Camera Angle</label>
+                                                <select 
+                                                    value={scene.angle} 
+                                                    onChange={e => setScene({...scene, angle: e.target.value})}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
+                                                >
+                                                    {Object.keys(ANGLE_MAP).map(a => <option key={a} value={a}>{a}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-400 mb-1">Video Movement</label>
+                                                <select 
+                                                    value={scene.movement} 
+                                                    onChange={e => setScene({...scene, movement: e.target.value})}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
+                                                >
+                                                    {MOVEMENT_MAP.map(m => <option key={m} value={m}>{m}</option>)}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-400 mb-1">Lighting & Atmos</label>
+                                                <select 
+                                                    value={scene.lighting} 
+                                                    onChange={e => setScene({...scene, lighting: e.target.value})}
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
+                                                >
+                                                    {LIGHTING_MAP.map(l => <option key={l} value={l}>{l}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Output Panel */}
+                                <div className="lg:col-span-5 space-y-6">
+                                    <div className="bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl relative">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h3 className="font-semibold text-emerald-400 flex items-center gap-2">
+                                                <IconMap /> 1. Master Image Prompt
+                                            </h3>
+                                            <button 
+                                                onClick={() => copyToClipboard(finalImagePrompt, 'image')}
+                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors"
+                                            >
+                                                {copySuccess === 'image' ? <IconCheck className="text-emerald-400"/> : <IconCopy />} 
+                                                {copySuccess === 'image' ? 'Copied!' : 'Copy'}
+                                            </button>
+                                        </div>
+                                        <div className="bg-slate-900 p-4 rounded-lg min-h-[120px] text-sm text-slate-300 leading-relaxed border border-slate-800">
+                                            {finalImagePrompt || <span className="text-slate-600 italic">Select options to generate prompt...</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl relative">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <h3 className="font-semibold text-blue-400 flex items-center gap-2">
+                                                <IconClapperboard /> 2. Video Motion Prompt
+                                            </h3>
+                                            <button 
+                                                onClick={() => copyToClipboard(finalVideoPrompt, 'video')}
+                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors"
+                                            >
+                                                {copySuccess === 'video' ? <IconCheck className="text-blue-400"/> : <IconCopy />} 
+                                                {copySuccess === 'video' ? 'Copied!' : 'Copy'}
+                                            </button>
+                                        </div>
+                                        <div className="bg-slate-900 p-4 rounded-lg min-h-[100px] text-sm text-slate-300 leading-relaxed border border-slate-800">
+                                            {finalVideoPrompt || <span className="text-slate-600 italic">Select movement/action to generate prompt...</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* --- VAULT TAB --- */}
+                        {activeTab === 'vault' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                
+                                {/* Character Vault */}
+                                <div className="bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl flex flex-col h-full">
+                                    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 text-amber-500">
+                                        <IconUsers /> Character Vault
+                                    </h2>
+                                    
+                                    <div className="bg-slate-900/80 p-5 rounded-lg border-2 border-dashed border-slate-700 mb-6 relative mt-2">
+                                        <div className="absolute -top-3 left-4 bg-slate-800 px-2 text-xs text-slate-400 font-medium">Create New</div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Character Name (e.g. Zara)" 
+                                            value={newChar.name}
+                                            onChange={e => setNewChar({...newChar, name: e.target.value})}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2.5 mb-3 text-sm focus:outline-none focus:border-amber-500 font-medium"
+                                        />
+                                        <textarea 
+                                            placeholder="Visual DNA (e.g. young african woman, dark skin, ripped grey shirt...)"
+                                            value={newChar.description}
+                                            onChange={e => setNewChar({...newChar, description: e.target.value})}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-3 mb-3 text-sm focus:outline-none focus:border-amber-500 h-28 resize-none"
+                                        />
+                                        <button 
+                                            onClick={addCharacter}
+                                            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium py-2.5 rounded-md transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20"
+                                        >
+                                            <IconPlus /> Add Character
+                                        </button>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <h3 className="text-sm font-medium text-slate-400 mb-3 border-b border-slate-700 pb-2">Saved Characters ({characters.length})</h3>
+                                        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {characters.length === 0 && <p className="text-slate-500 text-sm italic py-4">No characters saved.</p>}
+                                            {characters.map(c => (
+                                                <div key={c.id} className="bg-slate-700/40 border-l-4 border-l-amber-500 rounded-r-lg p-4 relative group hover:bg-slate-700/60 transition-colors">
+                                                    <button 
+                                                        onClick={() => deleteCharacter(c.id)}
+                                                        className="absolute top-3 right-3 text-slate-500 hover:text-red-400 transition-colors p-1"
+                                                    >
+                                                        <IconTrash />
+                                                    </button>
+                                                    <h4 className="font-semibold text-amber-300 text-sm flex items-center gap-2">
+                                                        {c.name} <IconCheck className="text-emerald-500" />
+                                                    </h4>
+                                                    <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{c.description}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Location Vault */}
+                                <div className="bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl flex flex-col h-full">
+                                    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 text-emerald-400">
+                                        <IconMap /> Location Vault
+                                    </h2>
+                                    
+                                    <div className="bg-slate-900/80 p-5 rounded-lg border-2 border-dashed border-slate-700 mb-6 relative mt-2">
+                                        <div className="absolute -top-3 left-4 bg-slate-800 px-2 text-xs text-slate-400 font-medium">Create New</div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Location Name (e.g. The Burned Village)" 
+                                            value={newLoc.name}
+                                            onChange={e => setNewLoc({...newLoc, name: e.target.value})}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2.5 mb-3 text-sm focus:outline-none focus:border-emerald-500 font-medium"
+                                        />
+                                        <textarea 
+                                            placeholder="Visual Details (e.g. ruined ancient village, burning debris...)"
+                                            value={newLoc.description}
+                                            onChange={e => setNewLoc({...newLoc, description: e.target.value})}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-3 mb-3 text-sm focus:outline-none focus:border-emerald-500 h-28 resize-none"
+                                        />
+                                        <button 
+                                            onClick={addLocation}
+                                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-md transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                                        >
+                                            <IconPlus /> Add Location
+                                        </button>
+                                    </div>
+
+                                    <div className="flex-1">
+                                        <h3 className="text-sm font-medium text-slate-400 mb-3 border-b border-slate-700 pb-2">Saved Locations ({locations.length})</h3>
+                                        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                            {locations.length === 0 && <p className="text-slate-500 text-sm italic py-4">No locations saved.</p>}
+                                            {locations.map(l => (
+                                                <div key={l.id} className="bg-slate-700/40 border-l-4 border-l-emerald-500 rounded-r-lg p-4 relative group hover:bg-slate-700/60 transition-colors">
+                                                    <button 
+                                                        onClick={() => deleteLocation(l.id)}
+                                                        className="absolute top-3 right-3 text-slate-500 hover:text-red-400 transition-colors p-1"
+                                                    >
+                                                        <IconTrash />
+                                                    </button>
+                                                    <h4 className="font-semibold text-emerald-300 text-sm flex items-center gap-2">
+                                                        {l.name} <IconCheck className="text-emerald-500" />
+                                                    </h4>
+                                                    <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{l.description}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
