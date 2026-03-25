@@ -42,10 +42,10 @@
         const IconClapperboard = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.4-2.2 1.5-2.5l13.5-4c1.1-.3 2.2.4 2.5 1.5l.6 2.4z"/><path d="m2.6 10.4 16.9-5"/><path d="m11.1 2.8 2.1 6.1"/><path d="m5.1 4.6 2.1 6.1"/><path d="m17.1 1 2.1 6.1"/><path d="M4 11v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8z"/></svg>;
         const IconCheck = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>;
         const IconCopy = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>;
-        const IconAlert = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
         const IconMessage = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
         const IconPlus = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
         const IconTrash = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>;
+        const IconWand = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>;
 
         // --- MAPS ---
         const EMOTION_MAP = {
@@ -91,16 +91,6 @@
             "Wide Shot": "wide shot, 24mm lens, showing full subject and environment"
         };
 
-        const LIGHTING_MAP = [
-            "None",
-            "Cinematic Nighttime, moody teal and orange",
-            "Golden Hour, warm sunlight, long shadows",
-            "Harsh Midday Sun, high contrast",
-            "Volumetric Fog, mysterious lighting",
-            "Neon Cyberpunk, vibrant pinks and blues",
-            "Firelight, flickering warm glow, deep shadows"
-        ];
-
         const MOVEMENT_MAP = [
             "Static shot",
             "Slow pan left",
@@ -128,7 +118,13 @@
                 emotion: 'None',
                 angle: 'None',
                 movement: 'Static shot',
-                lighting: 'None'
+                lighting: '' // Changed to manual text
+            });
+
+            // Generated Prompts State (Only updates on button click)
+            const [generatedPrompts, setGeneratedPrompts] = useState({
+                image: '',
+                video: ''
             });
 
             // Vault Input State
@@ -140,10 +136,12 @@
                 const savedChars = localStorage.getItem('mpb_characters');
                 const savedLocs = localStorage.getItem('mpb_locations');
                 const savedScene = localStorage.getItem('mpb_scene');
+                const savedPrompts = localStorage.getItem('mpb_prompts');
                 
                 if (savedChars) setCharacters(JSON.parse(savedChars));
                 if (savedLocs) setLocations(JSON.parse(savedLocs));
                 if (savedScene) setScene(JSON.parse(savedScene));
+                if (savedPrompts) setGeneratedPrompts(JSON.parse(savedPrompts));
             }, []);
 
             // Save to LocalStorage
@@ -151,7 +149,8 @@
                 localStorage.setItem('mpb_characters', JSON.stringify(characters));
                 localStorage.setItem('mpb_locations', JSON.stringify(locations));
                 localStorage.setItem('mpb_scene', JSON.stringify(scene));
-            }, [characters, locations, scene]);
+                localStorage.setItem('mpb_prompts', JSON.stringify(generatedPrompts));
+            }, [characters, locations, scene, generatedPrompts]);
 
             // Handlers
             const addCharacter = () => {
@@ -178,7 +177,7 @@
             };
 
             const copyToClipboard = (text, type) => {
-                // Try standard clipboard API first, fallback to execCommand
+                if (!text) return;
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(text);
                 } else {
@@ -194,14 +193,14 @@
                 setTimeout(() => setCopySuccess(''), 2000);
             };
 
-            // Prompt Generation
-            const generateImagePrompt = () => {
+            // Prompt Generation Methods
+            const buildImagePromptText = () => {
                 const loc = locations.find(l => l.id === scene.locationId);
                 const c1 = characters.find(c => c.id === scene.char1Id);
                 const c2 = characters.find(c => c.id === scene.char2Id);
                 const angleText = ANGLE_MAP[scene.angle];
                 const emotionText = EMOTION_MAP[scene.emotion]?.img;
-                const lightText = scene.lighting !== 'None' ? scene.lighting : '';
+                const lightText = scene.lighting.trim();
 
                 let prompt = "";
 
@@ -224,7 +223,7 @@
                 return prompt.trim();
             };
 
-            const generateVideoPrompt = () => {
+            const buildVideoPromptText = () => {
                 const emotionText = EMOTION_MAP[scene.emotion]?.vid;
                 let prompt = `${scene.movement}.`;
                 
@@ -240,8 +239,13 @@
                 return prompt.trim();
             };
 
-            const finalImagePrompt = generateImagePrompt();
-            const finalVideoPrompt = generateVideoPrompt();
+            // Compile Button Click Handler
+            const handleGenerate = () => {
+                setGeneratedPrompts({
+                    image: buildImagePromptText(),
+                    video: buildVideoPromptText()
+                });
+            };
 
             return (
                 <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
@@ -284,12 +288,12 @@
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                                 
                                 {/* Input Panel */}
-                                <div className="lg:col-span-7 bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl">
+                                <div className="lg:col-span-7 bg-slate-800 rounded-xl p-5 md:p-6 border border-slate-700 shadow-xl flex flex-col">
                                     <h2 className="text-lg md:text-xl font-semibold mb-6 flex items-center gap-2">
                                         <IconCamera className="text-amber-500" /> Shot Configuration
                                     </h2>
 
-                                    <div className="space-y-5">
+                                    <div className="space-y-5 flex-grow">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-400 mb-1">Location / Setting</label>
                                             <select 
@@ -383,17 +387,25 @@
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-slate-400 mb-1">Lighting & Atmos</label>
-                                                <select 
-                                                    value={scene.lighting} 
+                                                <label className="block text-sm font-medium text-slate-400 mb-1">Lighting & Atmos (Manual Text)</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={scene.lighting}
                                                     onChange={e => setScene({...scene, lighting: e.target.value})}
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 appearance-none"
-                                                >
-                                                    {LIGHTING_MAP.map(l => <option key={l} value={l}>{l}</option>)}
-                                                </select>
+                                                    placeholder="e.g. Golden hour, cinematic teal and orange..."
+                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500 placeholder-slate-600"
+                                                />
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    {/* COMPILE BUTTON */}
+                                    <button 
+                                        onClick={handleGenerate}
+                                        className="w-full mt-8 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-3.5 px-4 rounded-xl transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                                    >
+                                        <IconWand /> Generate Scene Prompts
+                                    </button>
                                 </div>
 
                                 {/* Output Panel */}
@@ -404,15 +416,16 @@
                                                 <IconMap /> 1. Master Image Prompt
                                             </h3>
                                             <button 
-                                                onClick={() => copyToClipboard(finalImagePrompt, 'image')}
-                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors"
+                                                onClick={() => copyToClipboard(generatedPrompts.image, 'image')}
+                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                                                disabled={!generatedPrompts.image}
                                             >
                                                 {copySuccess === 'image' ? <IconCheck className="text-emerald-400"/> : <IconCopy />} 
                                                 {copySuccess === 'image' ? 'Copied!' : 'Copy'}
                                             </button>
                                         </div>
                                         <div className="bg-slate-900 p-4 rounded-lg min-h-[120px] text-sm text-slate-300 leading-relaxed border border-slate-800">
-                                            {finalImagePrompt || <span className="text-slate-600 italic">Select options to generate prompt...</span>}
+                                            {generatedPrompts.image || <span className="text-slate-600 italic">Fill out the scene configuration and click "Generate Scene Prompts"...</span>}
                                         </div>
                                     </div>
 
@@ -422,15 +435,16 @@
                                                 <IconClapperboard /> 2. Video Motion Prompt
                                             </h3>
                                             <button 
-                                                onClick={() => copyToClipboard(finalVideoPrompt, 'video')}
-                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors"
+                                                onClick={() => copyToClipboard(generatedPrompts.video, 'video')}
+                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                                                disabled={!generatedPrompts.video}
                                             >
                                                 {copySuccess === 'video' ? <IconCheck className="text-blue-400"/> : <IconCopy />} 
                                                 {copySuccess === 'video' ? 'Copied!' : 'Copy'}
                                             </button>
                                         </div>
                                         <div className="bg-slate-900 p-4 rounded-lg min-h-[100px] text-sm text-slate-300 leading-relaxed border border-slate-800">
-                                            {finalVideoPrompt || <span className="text-slate-600 italic">Select movement/action to generate prompt...</span>}
+                                            {generatedPrompts.video || <span className="text-slate-600 italic">Fill out the scene configuration and click "Generate Scene Prompts"...</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -502,13 +516,13 @@
                                         <div className="absolute -top-3 left-4 bg-slate-800 px-2 text-xs text-slate-400 font-medium">Create New</div>
                                         <input 
                                             type="text" 
-                                            placeholder="Location Name (e.g. The Burned Village)" 
+                                            placeholder="Location Name (e.g. The Apex Penthouse Office)" 
                                             value={newLoc.name}
                                             onChange={e => setNewLoc({...newLoc, name: e.target.value})}
                                             className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-2.5 mb-3 text-sm focus:outline-none focus:border-emerald-500 font-medium"
                                         />
                                         <textarea 
-                                            placeholder="Visual Details (e.g. ruined ancient village, burning debris...)"
+                                            placeholder="Visual Details (e.g. massive sleek mahogany desk, floor-to-ceiling glass...)"
                                             value={newLoc.description}
                                             onChange={e => setNewLoc({...newLoc, description: e.target.value})}
                                             className="w-full bg-slate-900 border border-slate-700 rounded-md px-3 py-3 mb-3 text-sm focus:outline-none focus:border-emerald-500 h-28 resize-none"
@@ -555,4 +569,5 @@
     </script>
 </body>
 </html>
+
 
