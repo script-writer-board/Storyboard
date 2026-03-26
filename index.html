@@ -102,6 +102,19 @@
             "Circling the subject"
         ];
 
+        // --- TEXT CLEANER ---
+        // This stops Apple and Digen from treating the text as a URL link
+        const cleanPromptText = (text) => {
+            if (!text) return "";
+            return text
+                .replace(/[\n\r]+/g, ' ') // Replace newlines with spaces
+                .replace(/[•\-\*]/g, '')  // Remove common bullet points
+                .replace(/\.{2,}/g, '.')  // Replace multiple periods (..) with a single period (.)
+                .replace(/\s{2,}/g, ' ')  // Replace multiple spaces with a single space
+                .replace(/\s\./g, '.')    // Remove accidental spaces right before a period
+                .trim();
+        };
+
         const App = () => {
             const [activeTab, setActiveTab] = useState('builder');
             const [copySuccess, setCopySuccess] = useState('');
@@ -118,10 +131,10 @@
                 emotion: 'None',
                 angle: 'None',
                 movement: 'Static shot',
-                lighting: '' // Changed to manual text
+                lighting: ''
             });
 
-            // Generated Prompts State (Only updates on button click)
+            // Generated Prompts State
             const [generatedPrompts, setGeneratedPrompts] = useState({
                 image: '',
                 video: ''
@@ -176,6 +189,10 @@
                 if (scene.locationId === id) setScene({ ...scene, locationId: '' });
             };
 
+            const clearPrompt = (type) => {
+                setGeneratedPrompts(prev => ({...prev, [type]: ''}));
+            };
+
             const copyToClipboard = (text, type) => {
                 if (!text) return;
                 if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -220,7 +237,7 @@
 
                 if (emotionText && (c1 || c2)) prompt += `Subject exhibits ${emotionText}.`;
 
-                return prompt.trim();
+                return prompt;
             };
 
             const buildVideoPromptText = () => {
@@ -236,14 +253,18 @@
                     }
                 }
                 
-                return prompt.trim();
+                return prompt;
             };
 
             // Compile Button Click Handler
             const handleGenerate = () => {
+                const rawImageText = buildImagePromptText();
+                const rawVideoText = buildVideoPromptText();
+                
+                // Pass the raw text through the strict cleaner to fix the Apple/Digen bug
                 setGeneratedPrompts({
-                    image: buildImagePromptText(),
-                    video: buildVideoPromptText()
+                    image: cleanPromptText(rawImageText),
+                    video: cleanPromptText(rawVideoText)
                 });
             };
 
@@ -415,14 +436,23 @@
                                             <h3 className="font-semibold text-emerald-400 flex items-center gap-2">
                                                 <IconMap /> 1. Master Image Prompt
                                             </h3>
-                                            <button 
-                                                onClick={() => copyToClipboard(generatedPrompts.image, 'image')}
-                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
-                                                disabled={!generatedPrompts.image}
-                                            >
-                                                {copySuccess === 'image' ? <IconCheck className="text-emerald-400"/> : <IconCopy />} 
-                                                {copySuccess === 'image' ? 'Copied!' : 'Copy'}
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => clearPrompt('image')}
+                                                    className="text-xs bg-slate-700 hover:bg-red-900/40 text-slate-300 hover:text-red-400 py-1.5 px-2.5 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                                                    disabled={!generatedPrompts.image}
+                                                >
+                                                    <IconTrash className="w-3.5 h-3.5" /> Clear
+                                                </button>
+                                                <button 
+                                                    onClick={() => copyToClipboard(generatedPrompts.image, 'image')}
+                                                    className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                                                    disabled={!generatedPrompts.image}
+                                                >
+                                                    {copySuccess === 'image' ? <IconCheck className="text-emerald-400"/> : <IconCopy />} 
+                                                    {copySuccess === 'image' ? 'Copied!' : 'Copy'}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="bg-slate-900 p-4 rounded-lg min-h-[120px] text-sm text-slate-300 leading-relaxed border border-slate-800">
                                             {generatedPrompts.image || <span className="text-slate-600 italic">Fill out the scene configuration and click "Generate Scene Prompts"...</span>}
@@ -434,14 +464,23 @@
                                             <h3 className="font-semibold text-blue-400 flex items-center gap-2">
                                                 <IconClapperboard /> 2. Video Motion Prompt
                                             </h3>
-                                            <button 
-                                                onClick={() => copyToClipboard(generatedPrompts.video, 'video')}
-                                                className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
-                                                disabled={!generatedPrompts.video}
-                                            >
-                                                {copySuccess === 'video' ? <IconCheck className="text-blue-400"/> : <IconCopy />} 
-                                                {copySuccess === 'video' ? 'Copied!' : 'Copy'}
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => clearPrompt('video')}
+                                                    className="text-xs bg-slate-700 hover:bg-red-900/40 text-slate-300 hover:text-red-400 py-1.5 px-2.5 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                                                    disabled={!generatedPrompts.video}
+                                                >
+                                                    <IconTrash className="w-3.5 h-3.5" /> Clear
+                                                </button>
+                                                <button 
+                                                    onClick={() => copyToClipboard(generatedPrompts.video, 'video')}
+                                                    className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 py-1.5 px-3 rounded-md flex items-center gap-1 transition-colors disabled:opacity-50"
+                                                    disabled={!generatedPrompts.video}
+                                                >
+                                                    {copySuccess === 'video' ? <IconCheck className="text-blue-400"/> : <IconCopy />} 
+                                                    {copySuccess === 'video' ? 'Copied!' : 'Copy'}
+                                                </button>
+                                            </div>
                                         </div>
                                         <div className="bg-slate-900 p-4 rounded-lg min-h-[100px] text-sm text-slate-300 leading-relaxed border border-slate-800">
                                             {generatedPrompts.video || <span className="text-slate-600 italic">Fill out the scene configuration and click "Generate Scene Prompts"...</span>}
